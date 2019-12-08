@@ -1,6 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
 import {
+  FlatList,
   Image,
   Platform,
   ScrollView,
@@ -12,61 +13,89 @@ import {
 
 import { MonoText } from '../components/StyledText';
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}>
-        <View style={styles.welcomeContainer}>
-          <Image
-            source={
-              __DEV__
-                ? require('../assets/images/robot-dev.png')
-                : require('../assets/images/robot-prod.png')
-            }
-            style={styles.welcomeImage}
-          />
-        </View>
 
-        <View style={styles.getStartedContainer}>
-          <DevelopmentModeNotice />
+export default class HomeScreen extends React.Component{
+  constructor(props){
+    super(props);
+    this.state ={ isLoading: true}
+  }
+  componentDidMount(){
+    return fetch('https://spectator:d2ec2effdadb32216262519daed1606f51b0f5e79bc4578d0c89525872ea298679f8a05b0163de76@api.spectator.arcpublishing.com/content/v2/stories/search/published?q=taxonomy.sites.name:%22spectrum%22&size=1&sort=display_date:desc')
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          isLoading: false,
+          dataSource: responseJson.content_elements[0],
+        }, function(){
+          console.log(this.state.dataSource);
+        });
 
-          <Text style={styles.getStartedText}>Get started by opening</Text>
-
-          <View
-            style={[styles.codeHighlightContainer, styles.homeScreenFilename]}>
-            <MonoText>screens/HomeScreen.js</MonoText>
+      })
+      .catch((error) =>{
+        console.log("bruh");
+        console.error(error);
+      });
+  }
+  
+    render(){
+      console.log(this.state.dataSource);
+      return (
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}>
+          <View style={styles.welcomeContainer}>
+            <Image
+              source={
+                __DEV__
+                  ? require('../assets/images/robot-dev.png')
+                  : require('../assets/images/robot-prod.png')
+              }
+              style={styles.welcomeImage}
+            />
           </View>
 
-          <Text style={styles.getStartedText}>
-            Change this text and your app will automatically reload.
+          <View style={styles.getStartedContainer}>
+
+            
+            <View
+              style={[styles.codeHighlightContainer, styles.homeScreenFilename]}>
+              <MonoText>screens/HomeScreen.js</MonoText>
+            </View>
+
+            <View style={{flex: 1, paddingTop:20}}>
+              <FlatList
+                data={this.state.dataSource}
+                renderItem={({item}) => <Text>{item._id}, {item.type}</Text>}
+                keyExtractor={({id}, index) => id}
+              />
+            </View>
+          </View>
+                
+          <View style={styles.helpContainer}>
+            <TouchableOpacity onPress={handleHelpPress} style={styles.helpLink}>
+              <Text style={styles.helpLinkText}>
+                Help, it didn’t automatically reload!
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        <View style={styles.tabBarInfoContainer}>
+          <Text style={styles.tabBarInfoText}>
+            This is a tab bar. You can edit it in:
           </Text>
-        </View>
 
-        <View style={styles.helpContainer}>
-          <TouchableOpacity onPress={handleHelpPress} style={styles.helpLink}>
-            <Text style={styles.helpLinkText}>
-              Help, it didn’t automatically reload!
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      <View style={styles.tabBarInfoContainer}>
-        <Text style={styles.tabBarInfoText}>
-          This is a tab bar. You can edit it in:
-        </Text>
-
-        <View
-          style={[styles.codeHighlightContainer, styles.navigationFilename]}>
-          <MonoText style={styles.codeHighlightText}>
-            navigation/MainTabNavigator.js
-          </MonoText>
+          <View
+            style={[styles.codeHighlightContainer, styles.navigationFilename]}>
+            <MonoText style={styles.codeHighlightText}>
+              navigation/MainTabNavigator.js
+            </MonoText>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+            }
 }
 
 HomeScreen.navigationOptions = {
@@ -101,6 +130,7 @@ function handleLearnMorePress() {
     'https://docs.expo.io/versions/latest/workflow/development-mode/'
   );
 }
+
 
 function handleHelpPress() {
   WebBrowser.openBrowserAsync(
